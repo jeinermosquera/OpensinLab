@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────
+   OpenSimLab — Wokwi Dark Replica
+   Panel #1e1e1e/#202020 · Header #111 · Canvas #37373d/#3a3a3a
+   Sólidos oscuros, sin velos translúcidos, sin dot-grid claro
+   ────────────────────────────────────────────────────────── */
+
+:root {
+  /* Wokwi dark palette — sólidos */
+  --header-bg: #1a1a1a;
+  --header-bg-2: #1a1a1a;
+  --header-border: #333333;
+  --header-text: #e0e0e0;
+  --header-muted: #9a9a9a;
+  --header-icon: #777777;
+
+  --color-bg: #2d2d2d;
+  --color-bg-subtle: #252525;
+  --color-surface: #202020;
+  --color-surface-raised: #252525;
+  --color-surface-hover: #333333;
+  --color-surface-active: #3a3a3a;
+  --color-border: #333333;
+  --color-border-strong: #333333;
+  --color-border-elevated: #333333;
+
+  --panel-bg: #202020;
+  --panel-header: #111111;
+  --panel-input-bg: #2a2a2a;
+  --panel-item-hover: #333333;
+  --panel-item-selected: #3a3a3a;
+
+  /* Text */
+  --color-text: #e0e0e0;
+  --color-text-secondary: #cccccc;
+  --color-text-muted: #9a9a9a;
+  --color-text-faint: #777777;
+  --color-text-inverse: #111111;
+
+  /* Accent — Wokwi teal visible on dark */
+  --accent: #00979d;
+  --accent-hover: #007a7f;
+  --accent-strong: #006d71;
+  --accent-subtle: #0a2e2f;
+  --accent-ring: rgb(0 151 157 / 0.35);
+
+  --electric-500: #00979d;
+  --electric-600: #007a7f;
+  --brand-500: #00979d;
+  --brand-600: #007a7f;
+
+  --amber-500: #f59e0b;
+  --color-success: #00979d;
+  --color-danger: #e53935;
+
+  /* Canvas — grafito uniforme oscuro, sin grid claro */
+  --canvas-bg: #37373d;
+  --canvas-dot: transparent;
+  --canvas-board-bg: #3a3a3a;
+  --canvas-board-border: #333333;
+
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-full: 9999px;
+
+  --topbar-h: 52px;
+  --statusbar-h: 24px;
+  --panel-left-w: 300px;
+  --panel-right-w: 296px;
+  --panel-rail-w: 56px;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Base ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings — no glow */
+h1, h2, h3 { letter-spacing: -0.015em; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbar oscuro */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ── Canvas — fondo uniforme oscuro, sin puntos ── */
+.workspace-grid {
+  background-color: var(--canvas-board-bg);
+  background-image: none;
+}
+.workspace-outer {
+  background: var(--canvas-bg);
+  background-image: none;
+}
+
+/* Panels sólidos, sin backdrop-filter */
+.panel-veil,
+.board-veil,
+aside {
+  background: var(--panel-bg);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Wiring animation only */
+@keyframes wire-dash { to { stroke-dashoffset: -16; } }
+@keyframes pulse-subtle { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+::selection { background: rgb(0 151 157 / 0.35); color: #fff; }
