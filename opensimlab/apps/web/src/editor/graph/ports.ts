@@ -26,7 +26,6 @@ export type X6PortsConfig = {
   items: Array<{
     id: string;
     group: string;
-    label?: string;
     args?: { x: string | number; y: string | number };
     attrs?: typeof PORT_CIRCLE_ATTRS;
     markup?: typeof PORT_MARKUP;
@@ -52,12 +51,9 @@ export function getX6Ports(def: ComponentDefinition): X6PortsConfig {
   const items = def.pins.map((p) => {
     const norm = getWokwiNorm(def.id, p.id);
     if (norm) {
-      // Precisa: nx/ny 0-1 → porcentaje
-      // X6 absolute espera args {x: '47%', y: '78%'} o número absoluto
       return {
         id: p.id,
         group: p.side,
-        label: p.label,
         args: { x: `${norm.nx * 100}%`, y: `${norm.ny * 100}%` },
         attrs: PORT_CIRCLE_ATTRS,
       };
@@ -87,7 +83,6 @@ export function getX6Ports(def: ComponentDefinition): X6PortsConfig {
     return {
       id: p.id,
       group: side,
-      label: p.label,
       args: { x, y },
       attrs: PORT_CIRCLE_ATTRS,
     };
