@@ -40,32 +40,33 @@ export function photorealSvgString(
     case "led": {
       const bodyColor = ledFill;
       const bodyDark = ledColorKey === "green" ? "#14532d" : ledColorKey === "blue" ? "#1e3a8a" : "#7f1d1d";
-      // Visual puro — sin glow de simulación (siempre apagado)
-      const glow = `<ellipse cx="9.2" cy="22.3" rx="1.4" ry="1.9" fill="white" opacity="0.32" style="filter:blur(0.3px)"/>`;
+      const glow = `<ellipse cx="8.2" cy="8.5" rx="1.4" ry="1.9" fill="white" opacity="0.42" style="filter:blur(0.3px)"/>`;
+      // LED vertical como en foto: cápsula arriba, patas cortas abajo
       return `<svg width="${width}" height="${height}" viewBox="0 0 22 36" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LED">
         <defs>
           <linearGradient id="led-glass-${width}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
-            <stop offset="45%" stop-color="white" stop-opacity="0"/>
-            <stop offset="100%" stop-color="black" stop-opacity="0.18"/>
+            <stop offset="0%" stop-color="white" stop-opacity="0.58"/>
+            <stop offset="42%" stop-color="white" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="black" stop-opacity="0.20"/>
           </linearGradient>
-          <filter id="led-blur-${width}"><feGaussianBlur stdDeviation="1.6"/></filter>
         </defs>
-        <g stroke="#cbd5e1" stroke-width="1.55" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 6.5 18.2 L 6.5 3.2 L 2.8 3.2"/>
-          <path d="M 15.5 18.2 L 15.5 3.2 L 19.2 3.2"/>
+        <!-- patas cortas abajo como en foto -->
+        <g stroke="#9ca3af" stroke-width="1.6" fill="none" stroke-linecap="round">
+          <path d="M 8.2 27.5 L 8.2 34.5 L 7.2 34.5"/>
+          <path d="M 13.8 27.5 L 13.8 34.5 L 14.8 34.5"/>
         </g>
-        <g fill="#94a3b8" opacity="0.35">
-          <rect x="2.4" y="2.6" width="3.8" height="0.9" rx="0.3"/>
-          <rect x="15.6" y="2.6" width="3.8" height="0.9" rx="0.3"/>
+        <g fill="#6b7280" opacity="0.9">
+          <rect x="6.6" y="33.6" width="2.2" height="1.4" rx="0.3"/>
+          <rect x="13.2" y="33.6" width="2.2" height="1.4" rx="0.3"/>
         </g>
-        <rect x="5" y="18" width="12" height="7.2" rx="1.2" fill="${bodyColor}" stroke="${bodyDark}" stroke-width="0.35"/>
-        <rect x="5" y="18.4" width="12" height="7" rx="1" fill="url(#led-glass-${width})" opacity="0.9"/>
-        <ellipse cx="11" cy="25.8" rx="6" ry="5.8" fill="${bodyColor}" stroke="${bodyDark}" stroke-width="0.4"/>
-        <ellipse cx="11" cy="25.8" rx="6" ry="5.8" fill="url(#led-glass-${width})" opacity="0.85"/>
-        <ellipse cx="11" cy="27.2" rx="3.8" ry="1.1" fill="white" opacity="0.18" style="filter:blur(0.5px)"/>
+        <!-- cápsula arriba -->
+        <ellipse cx="11" cy="12.2" rx="6.4" ry="7.2" fill="${bodyColor}" stroke="${bodyDark}" stroke-width="0.42"/>
+        <rect x="4.6" y="12.2" width="12.8" height="8.2" rx="1.4" fill="${bodyColor}" stroke="${bodyDark}" stroke-width="0.38"/>
+        <ellipse cx="11" cy="12.2" rx="6.4" ry="7.2" fill="url(#led-glass-${width})" opacity="0.88"/>
+        <rect x="4.6" y="12.6" width="12.8" height="7.8" rx="1.2" fill="url(#led-glass-${width})" opacity="0.82"/>
+        <ellipse cx="8.8" cy="8.2" rx="2.2" ry="2.8" fill="white" opacity="0.22" style="filter:blur(0.4px)"/>
         ${glow}
-        <rect x="5" y="17.6" width="12" height="0.9" rx="0.4" fill="#64748b" opacity="0.55"/>
+        <rect x="4.6" y="19.8" width="12.8" height="1" rx="0.4" fill="#4b5563" opacity="0.55"/>
       </svg>`;
     }
     case "resistor": {

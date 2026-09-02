@@ -6,17 +6,16 @@ export type WokwiNorm = { nx: number; ny: number };
 export type WokwiSignal = { type: "power"; signal: "GND" | "VCC" } | { type: string; signal?: string };
 export type WokwiPinRaw = { name: string; x: number; y: number; signals: WokwiSignal[] };
 
-// viewBox: LED 0 0 22 36  (patas en borde superior y=1.5, dobladas en L)
+// viewBox: LED 0 0 22 36  (patas cortas abajo y=34.5, como en foto)
 //         Resistencia 0 0 64 14 (patas laterales y=7, x=1 y x=63)
 //         ESP32 0 0 156 210 (pines amarillos laterales x=8 y x=148, 15 cada lado)
 
 export const WOKWI_NORMS: Record<string, Record<string, WokwiNorm>> = {
   led: (() => {
     const m: Record<string, WokwiNorm> = {};
-    // patas plateadas dobladas en L en borde superior — coincide con SVG LED
-    // ánodo ligeramente a la izquierda, cátodo a la derecha, misma y superior
-    const anode: WokwiNorm = { nx: 6.5 / 22, ny: 1.8 / 36 };
-    const cathode: WokwiNorm = { nx: 15.5 / 22, ny: 1.8 / 36 };
+    // patas cortas abajo como en foto — 2 patas verticales en borde inferior
+    const anode: WokwiNorm = { nx: 8.2 / 22, ny: 34.5 / 36 };
+    const cathode: WokwiNorm = { nx: 13.8 / 22, ny: 34.5 / 36 };
     m["anode"] = anode;
     m["a"] = anode;
     m["anode:long"] = anode;

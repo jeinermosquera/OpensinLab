@@ -28,9 +28,9 @@ export const COMPONENT_DEFINITIONS: ComponentDefinition[] = [
     height: 36,
     color: "#3b82f6",
     pins: [
-      // 2 pines arriba coherentes con SVG (patas plateadas en L en borde superior)
-      { id: "anode", label: "A (larga)", side: "top" },
-      { id: "cathode", label: "C (corta/GND)", side: "top" },
+      // 2 pines abajo como en foto (patas cortas verticales)
+      { id: "anode", label: "A (larga)", side: "bottom" },
+      { id: "cathode", label: "C (corta/GND)", side: "bottom" },
     ],
     defaultProps: { color: "azul" },
   },

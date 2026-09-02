@@ -135,6 +135,17 @@ aside {
   -webkit-backdrop-filter: none !important;
 }
 
+/* Selección ESP32 como en foto: borde punteado verde + ? */
+.x6-widget-selection-box,
+.x6-widget-selection-inner {
+  border: 1.5px dashed #22c55e !important;
+  box-shadow: 0 0 0 1px rgb(34 197 94 / 0.15) !important;
+}
+.x6-node-selected {
+  outline: 1.5px dashed #22c55e !important;
+  outline-offset: 2px !important;
+}
+
 /* Wiring animation only */
 @keyframes wire-dash { to { stroke-dashoffset: -16; } }
 @keyframes pulse-subtle { 0%,100%{opacity:1} 50%{opacity:0.55} }
