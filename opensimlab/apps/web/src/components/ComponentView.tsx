@@ -58,13 +58,10 @@ export function ComponentView({ comp, selected, onSelect, onPointerDown, onPinCl
         height: def.height,
         transform: `rotate(${comp.rotation}deg)`,
         transformOrigin: "center",
-        // Realismo al zoom: sombra de profundidad + elevación; LED y resistencia con corriente mantienen glow
         filter:
           def.id === "led" && ledOn
             ? "drop-shadow(0 4px 10px rgba(0,0,0,0.42)) drop-shadow(0 0 16px rgba(251,146,60,0.55))"
-            : def.id === "breadboard"
-              ? "drop-shadow(0 6px 14px rgba(0,0,0,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.28))"
-              : "drop-shadow(0 4px 8px rgba(0,0,0,0.32)) drop-shadow(0 1px 2px rgba(0,0,0,0.24))",
+            : "drop-shadow(0 4px 8px rgba(0,0,0,0.32)) drop-shadow(0 1px 2px rgba(0,0,0,0.24))",
         borderRadius: 6,
         ...(def.id === "resistor" && withCurrent ? { boxShadow: "0 0 0 2px rgba(251,146,60,0.22), 0 0 18px rgba(251,146,60,0.32)" } : {}),
       }}

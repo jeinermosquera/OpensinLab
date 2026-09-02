@@ -65,16 +65,30 @@ export function useWorkbenchState() {
     }
   }, [setCircuit]);
 
-  // auto-restaura al montar (opcional, no rompe si no hay datos)
+  // auto-restaura al montar — con migración: filtra componentes con definitionId ya no existente (ej: tras reducir a 3)
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
       const raw = window.localStorage.getItem(CIRCUIT_STORAGE_KEY);
       if (raw) {
-        const next = deserialize(raw);
-        // solo restaura si tiene contenido y el estado actual está vacío
-        if ((next.components.length > 0 || next.wires.length > 0) && history.present.components.length === 0 && history.present.wires.length === 0) {
-          dispatch({ type: "SET", next });
+        try {
+          const next = deserialize(raw);
+          // Filtra componentes cuyo tipo ya no existe (evita mesa vacía fantasma)
+          const known = new Set(["led", "resistor", "esp32"]);
+          const filtered: typeof next = {
+            components: next.components.filter((c) => known.has(c.definitionId)),
+            wires: next.wires.filter((w) => known.has(next.components.find((cc) => cc.instanceId === w.from.instanceId)?.definitionId ?? "") && known.has(next.components.find((cc) => cc.instanceId === w.to.instanceId)?.definitionId ?? "")),
+            selectedId: next.selectedId,
+          };
+          const toRestore = filtered.components.length !== next.components.length || filtered.wires.length !== next.wires.length ? filtered : next;
+          if ((toRestore.components.length > 0 || toRestore.wires.length > 0) && history.present.components.length === 0 && history.present.wires.length === 0) {
+            dispatch({ type: "SET", next: toRestore });
+          } else if (filtered.components.length === 0 && next.components.length > 0) {
+            // era circuito viejo con componentes eliminados → limpia para no bloquear nuevos
+            window.localStorage.removeItem(CIRCUIT_STORAGE_KEY);
+          }
+        } catch {
+          window.localStorage.removeItem(CIRCUIT_STORAGE_KEY);
         }
       }
     } catch {}

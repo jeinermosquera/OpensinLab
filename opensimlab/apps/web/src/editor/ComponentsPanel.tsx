@@ -10,26 +10,14 @@ type Props = {
   onAdd: (id: string) => void;
 };
 
-// Wokwi-like icon tint per component id — matches screenshot palette
 function tintFor(id: string): string {
   switch (id) {
-    case "led": return "#e53935"; // LED red
-    case "resistor": return "#d2a24c"; // resistor beige/brown stripes
-    case "capacitor": return "#facc15";
-    case "button": return "#22c55e"; // pushbutton green default, variations via item
-    case "uno": return "#1a7bb8"; // Arduino blue
-    case "esp32": return "#1a1a1a";
-    case "dht22": return "#4ade80";
-    case "ultrasonic": return "#60a5fa";
-    case "servo": return "#2563eb";
-    case "breadboard": return "#f5f5dc";
+    case "led": return "#3b82f6";
+    case "resistor": return "#d2a24c";
+    case "esp32": return "#cbd5e1";
     default: return "#9ca3af";
   }
 }
-
-// Category grouping to replicate screenshot: Básico vs Mostrar
-const GROUP_BASICO = new Set(["led", "resistor", "capacitor", "button", "uno", "esp32", "breadboard"]);
-const GROUP_MOSTRAR = new Set(["dht22", "ultrasonic", "servo"]);
 
 function SectionHeader({ label }: { label: string }) {
   return (
@@ -53,10 +41,6 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
     const lq = q.toLowerCase();
     return COMPONENT_DEFINITIONS.filter((c) => c.name.toLowerCase().includes(lq) || c.desc.toLowerCase().includes(lq) || c.category.toLowerCase().includes(lq));
   }, [q]);
-
-  const basicos = filtered.filter((c) => GROUP_BASICO.has(c.id));
-  const mostrar = filtered.filter((c) => GROUP_MOSTRAR.has(c.id));
-  const others = filtered.filter((c) => !GROUP_BASICO.has(c.id) && !GROUP_MOSTRAR.has(c.id));
 
   if (collapsed) {
     return (
@@ -87,7 +71,7 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
       onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
       title={name}
     >
-      <span className="size-7 grid place-items-center rounded-sm shrink-0 overflow-hidden" style={{ width: 28, height: 28, background: id === "uno" ? "#0e4a6b" : id === "resistor" ? "#3a2a12" : id === "led" ? "#2a0a0a" : "#1f1f1f", border: "1px solid #333" }}>
+      <span className="size-7 grid place-items-center rounded-sm shrink-0 overflow-hidden" style={{ width: 28, height: 28, background: id === "esp32" ? "#0f1115" : id === "resistor" ? "#3a2a12" : "#0a1a2e", border: "1px solid #333" }}>
         <Icon size={16} style={{ color: tintFor(id) }} />
       </span>
       <span className="flex-1 min-w-0 text-[13px] font-normal truncate" style={{ color: active ? "#ffffff" : "#d4d4d4" }}>{name}</span>
@@ -96,7 +80,6 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
 
   return (
     <aside className="flex flex-col min-w-0 border-r shrink-0 overflow-hidden" style={{ width: "var(--panel-left-w)", background: "var(--panel-bg)", borderColor: "#333" }}>
-      {/* Search — Wokwi: dark input, underline teal 2px, magnifier at right */}
       <div className="px-3 pt-3 pb-2 shrink-0" style={{ background: "#1e1e1e" }}>
         <div className="relative">
           <input
@@ -115,7 +98,6 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
         </div>
       </div>
 
-      {/* Content — two black category bars like screenshot */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {filtered.length === 0 ? (
           <div className="py-10 px-4 text-center">
@@ -125,17 +107,7 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
         ) : (
           <>
             <SectionHeader label="Básico" />
-            {basicos.length === 0 ? <p className="px-3 py-2 text-xs text-zinc-500">—</p> : basicos.map((c) => {
-              const Icon = ICON_MAP[c.icon] ?? Grid3x3;
-              return <Item key={c.id} id={c.id} name={c.name} Icon={Icon} active={selectedId === c.id} />;
-            })}
-            <SectionHeader label="Mostrar" />
-            {mostrar.length === 0 && others.length === 0 ? <p className="px-3 py-2 text-xs text-zinc-500">—</p> : null}
-            {mostrar.map((c) => {
-              const Icon = ICON_MAP[c.icon] ?? Grid3x3;
-              return <Item key={c.id} id={c.id} name={c.name} Icon={Icon} active={selectedId === c.id} />;
-            })}
-            {others.map((c) => {
+            {filtered.map((c) => {
               const Icon = ICON_MAP[c.icon] ?? Grid3x3;
               return <Item key={c.id} id={c.id} name={c.name} Icon={Icon} active={selectedId === c.id} />;
             })}
@@ -143,7 +115,6 @@ export function ComponentsPanel({ collapsed, onCollapse, onAdd }: Props) {
         )}
       </div>
 
-      {/* Collapse handle bottom */}
       <div className="h-8 flex items-center justify-end px-2 border-t shrink-0" style={{ background: "#1e1e1e", borderColor: "#333" }}>
         <button type="button" onClick={onCollapse} className="size-6 grid place-items-center text-zinc-500 hover:text-zinc-200" aria-label="Contraer">
           <ChevronLeft size={14} />
