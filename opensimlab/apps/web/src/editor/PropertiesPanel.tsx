@@ -2,8 +2,7 @@
 
 import { getDefinition, ICON_MAP } from "@/components/definitions";
 import type { PlacedComponent, Wire } from "@/core/state/circuit";
-import type { SimulationResult } from "@/simulation/SimulationEngine";
-import { SlidersHorizontal, ChevronRight, ChevronLeft, Settings2, Trash2, Copy, RotateCw, Grid3x3, Power, Lightbulb } from "lucide-react";
+import { SlidersHorizontal, ChevronRight, ChevronLeft, Settings2, Trash2, Copy, RotateCw, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -17,13 +16,9 @@ type Props = {
   onRotate: (id: string) => void;
   onDuplicate: (id: string) => void;
   onRemove: (id: string) => void;
-  // FASE 6 — simulación
-  gpioLevel?: "HIGH" | "LOW";
-  onToggleGpio?: () => void;
-  simulation?: SimulationResult;
 };
 
-export function PropertiesPanel({ collapsed, onCollapse, selected, selectedWire, total, wireTotal, onUpdateProp, onRotate, onDuplicate, onRemove, gpioLevel = "LOW", onToggleGpio, simulation }: Props) {
+export function PropertiesPanel({ collapsed, onCollapse, selected, selectedWire, total, wireTotal, onUpdateProp, onRotate, onDuplicate, onRemove }: Props) {
   if (collapsed) {
     return (
       <aside className="hidden lg:flex flex-col items-center gap-3 py-3 border-l shrink-0" style={{ width: "var(--panel-rail-w)", background: "#1e1e1e", borderColor: "#333" }}>
@@ -134,67 +129,6 @@ export function PropertiesPanel({ collapsed, onCollapse, selected, selectedWire,
                     </label>
                   ))}
                 </div>
-
-                {/* FASE 6 — controles de simulación por componente */}
-                {selected.definitionId === "esp32" && onToggleGpio && simulation && (
-                  <div className="space-y-2 pt-3 border-t" style={{ borderColor: "#333" }}>
-                    <h3 className="text-[11px] font-mono font-semibold tracking-[0.1em] flex items-center gap-1.5" style={{ color: "#888" }}>
-                      <Power size={12} /> SIMULACIÓN GPIO2
-                    </h3>
-                    <div className="flex items-center gap-2 p-2.5 rounded-sm border" style={{ background: gpioLevel === "HIGH" ? "rgba(251,146,60,0.12)" : "#252525", borderColor: gpioLevel === "HIGH" ? "#f59e0b" : "#333" }}>
-                      <span className="size-2.5 rounded-full shrink-0" style={{ background: gpioLevel === "HIGH" ? "#f59e0b" : "#555", boxShadow: gpioLevel === "HIGH" ? "0 0 8px #f59e0b" : "none" }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-mono font-semibold" style={{ color: gpioLevel === "HIGH" ? "#fbbf24" : "#aaa" }}>GPIO2 {gpioLevel}</p>
-                        <p className="text-[11px] leading-tight" style={{ color: "#777" }}>{gpioLevel === "HIGH" ? "3.3V" : "0V"} · {simulation.pathFound ? "camino OK" : "sin camino"}</p>
-                      </div>
-                      <Button size="sm" onClick={onToggleGpio} className="rounded-sm shrink-0" style={{ background: gpioLevel === "HIGH" ? "#92400e" : "#0a5a3a", borderColor: gpioLevel === "HIGH" ? "#f59e0b" : "#0d7a4a", color: "#fff" }}>
-                        {gpioLevel === "HIGH" ? "→ LOW" : "→ HIGH"}
-                      </Button>
-                    </div>
-                    <p className="text-[11px] leading-relaxed px-1" style={{ color: simulation.pathFound ? (gpioLevel === "HIGH" ? "#fbbf24" : "#9ca3af") : "#f87171" }}>{simulation.reason}</p>
-                    <div className="flex gap-1.5 text-[11px] font-mono">
-                      <span className="px-2 py-1 rounded-sm border" style={{ background: "#1e1e1e", borderColor: "#333", color: simulation.pathFound ? "#6ee7b7" : "#777" }}>path {simulation.pathFound ? "✓" : "✗"}</span>
-                      <span className="px-2 py-1 rounded-sm border" style={{ background: "#1e1e1e", borderColor: "#333", color: simulation.ledStates[selected.instanceId] !== undefined ? "#777" : "#666" }}>{simulation.pathComponentIds.length} en ruta</span>
-                    </div>
-                  </div>
-                )}
-
-                {selected.definitionId === "led" && simulation && (
-                  <div className="space-y-2 pt-3 border-t" style={{ borderColor: "#333" }}>
-                    <h3 className="text-[11px] font-mono font-semibold tracking-[0.1em] flex items-center gap-1.5" style={{ color: "#888" }}>
-                      <Lightbulb size={12} /> ESTADO LED
-                    </h3>
-                    {(() => {
-                      const on = !!simulation.ledStates[selected.instanceId];
-                      return (
-                        <div className="flex items-center gap-2 p-2.5 rounded-sm border" style={{ background: on ? "rgba(251,146,60,0.12)" : "#252525", borderColor: on ? "#f59e0b" : "#333" }}>
-                          <span className="size-3 rounded-full shrink-0" style={{ background: on ? "#f59e0b" : "#444", boxShadow: on ? "0 0 10px #f59e0b" : "none" }} />
-                          <div className="flex-1">
-                            <p className="text-xs font-semibold" style={{ color: on ? "#fbbf24" : "#888" }}>{on ? "ENCENDIDO" : "APAGADO"}</p>
-                            <p className="text-[11px] font-mono" style={{ color: "#777" }}>{simulation.gpioState["esp32-gpio2"]} · {simulation.pathFound ? "camino OK" : "sin camino"}</p>
-                          </div>
-                          <span className="text-[11px] font-mono px-2 py-1 rounded-sm border" style={{ background: "#1e1e1e", borderColor: "#333", color: on ? "#fbbf24" : "#666" }}>{on ? "3.3V" : "0V"}</span>
-                        </div>
-                      );
-                    })()}
-                    <p className="text-[11px] leading-relaxed" style={{ color: "#666" }}>{simulation.reason}</p>
-                  </div>
-                )}
-
-                {selected.definitionId === "resistor" && simulation && (
-                  <div className="space-y-2 pt-3 border-t" style={{ borderColor: "#333" }}>
-                    <h3 className="text-[11px] font-mono font-semibold tracking-[0.1em]" style={{ color: "#888" }}>CORRIENTE</h3>
-                    {(() => {
-                      const hasCurrent = !!simulation.resistorStates[selected.instanceId];
-                      return (
-                        <div className="flex items-center gap-2 p-2.5 rounded-sm border" style={{ background: hasCurrent ? "rgba(251,146,60,0.08)" : "#252525", borderColor: hasCurrent ? "rgba(251,146,60,0.45)" : "#333" }}>
-                          <span className="size-2.5 rounded-full" style={{ background: hasCurrent ? "#f59e0b" : "#555", boxShadow: hasCurrent ? "0 0 6px #f59e0b" : "none" }} />
-                          <span className="text-xs font-mono" style={{ color: hasCurrent ? "#fbbf24" : "#888" }}>{hasCurrent ? "Con corriente (~15mA)" : "Sin corriente"}</span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
               </>
             );
           })()}

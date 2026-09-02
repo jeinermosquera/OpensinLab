@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Undo2, Redo2, Trash2, Play, Square, Menu, PanelRight, MoreHorizontal, ChevronDown, Hash, Zap, Save, Upload, Power } from "lucide-react";
+import { Undo2, Redo2, Trash2, Menu, PanelRight, MoreHorizontal, ChevronDown, Hash, Zap, Save, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type TopBarProps = {
@@ -16,13 +16,6 @@ type TopBarProps = {
   wireCount: number;
   onSave?: () => void;
   onLoadFile?: (file: File) => void;
-  // FASE 6 — simulación GPIO2 toggle
-  gpioLevel?: "HIGH" | "LOW";
-  onToggleGpio?: () => void;
-  onSetHigh?: () => void;
-  onSetLow?: () => void;
-  pathFound?: boolean;
-  ledOn?: boolean;
 };
 
 export function TopBar({
@@ -37,12 +30,6 @@ export function TopBar({
   wireCount,
   onSave,
   onLoadFile,
-  gpioLevel = "LOW",
-  onToggleGpio,
-  onSetHigh,
-  onSetLow,
-  pathFound = false,
-  ledOn = false,
 }: TopBarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const handleLoadClick = () => fileRef.current?.click();
@@ -51,8 +38,6 @@ export function TopBar({
     if (f) onLoadFile?.(f);
     e.target.value = "";
   };
-  const isHigh = gpioLevel === "HIGH";
-  void onSetHigh;
   return (
     <header
       className="flex items-center gap-3 px-3 shrink-0 sticky top-0 border-b"
@@ -105,55 +90,6 @@ export function TopBar({
         <Button variant="ghost" size="sm" onClick={onClear} className="hidden md:inline-flex h-7 px-2.5 rounded-full border text-xs hover:bg-[#252525]" style={{ background: "#252525", borderColor: "#333", color: "#999" }}>
           <Trash2 size={12} /> Limpiar
         </Button>
-
-        <div className="flex items-center gap-1 ml-1 pl-2 border-l" style={{ borderColor: "#333" }}>
-          <span className="hidden lg:inline text-[10px] font-mono tracking-widest font-semibold mr-1" style={{ color: "#666" }}>SIMULACIÓN</span>
-          {/* FASE 6: Ejecutar alterna GPIO2 HIGH/LOW; color y label reflejan estado */}
-          <button
-            type="button"
-            onClick={onToggleGpio}
-            aria-label={isHigh ? "Poner GPIO2 LOW" : "Poner GPIO2 HIGH"}
-            className="inline-flex items-center gap-1.5 pl-2.5 pr-3 h-7 rounded-full text-xs font-semibold border transition-colors"
-            style={{
-              background: isHigh ? "#b45309" : "#0a5a3a",
-              color: "#fff",
-              borderColor: isHigh ? "#f59e0b" : "#0d7a4a",
-              boxShadow: isHigh ? "0 0 10px rgba(245,158,11,0.35)" : "none",
-            }}
-            title={pathFound ? (isHigh ? "LED debería estar ENCENDIDO si camino OK" : "LED APAGADO (GPIO LOW)") : "Sin camino GPIO2→R→LED→GND — revisa cableado"}
-          >
-            {isHigh ? <Power size={12} className="fill-white" /> : <Play size={12} className="fill-white" />}
-            {isHigh ? "GPIO HIGH" : "Ejecutar"}
-          </button>
-          <button
-            type="button"
-            onClick={onSetLow}
-            aria-label="Detener — GPIO LOW"
-            className="size-7 grid place-items-center rounded-full border transition-opacity"
-            style={{
-              background: !isHigh ? "#252525" : "#3a1a1a",
-              borderColor: !isHigh ? "#333" : "#5a2222",
-              color: !isHigh ? "#777" : "#f87171",
-              opacity: 1,
-            }}
-          >
-            <Square size={9} className="fill-current" />
-          </button>
-          {/* Indicador LED */}
-          <span
-            className="hidden sm:inline-flex items-center gap-1.5 ml-1 px-2 py-1 rounded-full border text-[10px] font-mono font-semibold"
-            style={{
-              background: ledOn ? "rgba(251,146,60,0.16)" : "#1e1e1e",
-              borderColor: ledOn ? "#f59e0b" : "#333",
-              color: ledOn ? "#fbbf24" : "#666",
-              boxShadow: ledOn ? "0 0 8px rgba(251,146,60,0.45)" : "none",
-            }}
-            title={ledOn ? "LED ENCENDIDO" : pathFound ? "LED APAGADO — pon HIGH" : "LED APAGADO — sin camino"}
-          >
-            <span className="size-2 rounded-full" style={{ background: ledOn ? "#f59e0b" : "#444", boxShadow: ledOn ? "0 0 6px #f59e0b" : "none" }} />
-            LED {ledOn ? "ON" : "OFF"}
-          </span>
-        </div>
 
         <button type="button" className="size-7 grid place-items-center rounded-sm border hover:bg-[#252525] hidden sm:grid ml-0.5" style={{ background: "#252525", borderColor: "#333", color: "#777" }} aria-label="Más">
           <MoreHorizontal size={14} />

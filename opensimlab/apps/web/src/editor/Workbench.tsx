@@ -7,7 +7,6 @@ import { PropertiesPanel } from "./PropertiesPanel";
 import { WorkspaceCanvas } from "./WorkspaceCanvas";
 import { StatusBar } from "./StatusBar";
 import { useWorkbenchState } from "@/core/state/useWorkbenchState";
-import { useSimulation } from "@/simulation/useSimulation";
 
 export function Workbench() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -16,8 +15,6 @@ export function Workbench() {
   const [drawerRight, setDrawerRight] = useState(false);
   const [zoom, setZoom] = useState(100);
   const wb = useWorkbenchState();
-  // FASE 6 — simulación minimal GPIO2→R→LED→GND (visual separado, engine solo lee CircuitState)
-  const sim = useSimulation(wb.circuit);
 
   const handleSave = () => {
     try {
@@ -82,9 +79,6 @@ export function Workbench() {
     else wb.completeWire({ instanceId, pinId });
   };
 
-  // resumen LED ON si algún LED encendido
-  const anyLedOn = Object.values(sim.result.ledStates).some(Boolean);
-
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: "var(--color-bg)" }}>
       <TopBar
@@ -105,12 +99,6 @@ export function Workbench() {
         wireCount={wb.circuit.wires.length}
         onSave={handleSave}
         onLoadFile={handleLoadFile}
-        gpioLevel={sim.gpioState["esp32-gpio2"]}
-        onToggleGpio={sim.toggleGpio}
-        onSetHigh={sim.setHigh}
-        onSetLow={sim.setLow}
-        pathFound={sim.result.pathFound}
-        ledOn={anyLedOn}
       />
 
       <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden relative">
@@ -137,7 +125,6 @@ export function Workbench() {
           onCancelWire={wb.cancelWire}
           onWireConnect={({ from, to, color }) => wb.addWire(from, to, color)}
           onWireRemove={(id) => wb.removeWire(id)}
-          simulation={sim.result}
         />
 
         <div className="hidden lg:flex shrink-0">
@@ -152,9 +139,6 @@ export function Workbench() {
             onRotate={wb.rotate}
             onDuplicate={wb.duplicate}
             onRemove={wb.remove}
-            gpioLevel={sim.gpioState["esp32-gpio2"]}
-            onToggleGpio={sim.toggleGpio}
-            simulation={sim.result}
           />
         </div>
 
@@ -181,9 +165,6 @@ export function Workbench() {
                 onRotate={wb.rotate}
                 onDuplicate={wb.duplicate}
                 onRemove={wb.remove}
-                gpioLevel={sim.gpioState["esp32-gpio2"]}
-                onToggleGpio={sim.toggleGpio}
-                simulation={sim.result}
               />
             </div>
           </>

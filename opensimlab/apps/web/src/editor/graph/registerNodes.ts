@@ -16,7 +16,6 @@ function createPhotorealElement(
   def: ComponentDefinition,
   props: Record<string, string | number>,
   size: { width: number; height: number },
-  extraData?: { ledOn?: boolean; hasCurrent?: boolean },
 ): HTMLElement {
   const wrap = document.createElement("div");
   wrap.style.width = `${size.width}px`;
@@ -24,22 +23,13 @@ function createPhotorealElement(
   wrap.style.display = "block";
   wrap.style.pointerEvents = "none";
   wrap.style.overflow = "visible";
-  wrap.innerHTML = photorealSvgString(def.id, size.width, size.height, props, extraData);
-  // glow para LED encendido ya está en SVG, pero reforzamos container
-  if (def.id === "led" && extraData?.ledOn) {
-    wrap.style.filter = "brightness(1.08) drop-shadow(0 0 8px rgba(251,146,60,0.45))";
-  }
-  if (def.id === "resistor" && extraData?.hasCurrent) {
-    wrap.style.filter = "brightness(1.06) drop-shadow(0 0 6px rgba(251,146,60,0.35))";
-  }
+  wrap.innerHTML = photorealSvgString(def.id, size.width, size.height, props);
   return wrap;
 }
 
 /**
  * Registra node 'wokwi-node' con shape html fotorrealista.
- * Reemplaza SVGs planos / placeholders de Fase 3 por renders con textura real
- * (PCB con pistas cobre, metales especulares, gradientes, sombras 3D)
- * Mantiene ports visibles y normas WOKWI_NORMS 1:1.
+ * Visual puro sin simulación — sin glow de corriente.
  */
 export function registerWokwiNodes(): void {
   if (registered) return;
@@ -59,16 +49,18 @@ export function registerWokwiNodes(): void {
   Graph.registerNode(
     "wokwi-node",
     {
-      inherit: "html",
+      inherit: "rect",
       width: 100,
       height: 40,
+      markup: [
+        { tagName: "rect", selector: "body" },
+        { tagName: "foreignObject", selector: "fo" },
+      ],
       html: {
         render(node: { getData: () => unknown; getSize: () => { width: number; height: number } }) {
           const data = node.getData() as {
             definitionId?: string;
             props?: Record<string, string | number>;
-            ledOn?: boolean;
-            hasCurrent?: boolean;
           } | undefined;
           const definitionId = data?.definitionId ?? "unknown";
           const props = data?.props ?? {};
@@ -95,32 +87,9 @@ export function registerWokwiNodes(): void {
             return container;
           }
 
-          const isLedOn = !!data?.ledOn;
-          const hasCurrent = !!data?.hasCurrent || isLedOn;
-          if (def.id === "led" && isLedOn) {
-            container.style.filter = "drop-shadow(0 0 10px rgba(251,146,60,0.85))";
-            container.style.borderRadius = "6px";
-          }
-          if (def.id === "resistor" && hasCurrent) {
-            container.style.boxShadow = "0 0 0 2px rgba(251,146,60,0.22), 0 0 12px rgba(251,146,60,0.18)";
-            container.style.borderRadius = "4px";
-          }
-
-          const inner = createPhotorealElement(def, props, { width: size.width, height: size.height }, { ledOn: isLedOn, hasCurrent });
+          const inner = createPhotorealElement(def, props, { width: size.width, height: size.height });
           container.appendChild(inner);
 
-          if (def.id === "led" && isLedOn) {
-            const glow = document.createElement("div");
-            glow.style.position = "absolute";
-            glow.style.inset = "18% 22%";
-            glow.style.background = "radial-gradient(ellipse at center, rgba(251,191,36,0.95) 0%, rgba(239,68,68,0.55) 45%, transparent 75%)";
-            glow.style.filter = "blur(6px)";
-            glow.style.pointerEvents = "none";
-            glow.style.zIndex = "0";
-            glow.style.borderRadius = "50%";
-            container.style.position = "relative";
-            container.insertBefore(glow, container.firstChild);
-          }
           return container;
         },
         shouldComponentUpdate(node: { hasChanged: (k: string) => boolean }) {
@@ -157,6 +126,13 @@ export function registerWokwiNodes(): void {
           fill: "transparent",
           stroke: "transparent",
           strokeWidth: 0,
+        },
+        fo: {
+          x: 0,
+          y: 0,
+          width: "100%",
+          height: "100%",
+          style: "overflow: visible;",
         },
       },
     },

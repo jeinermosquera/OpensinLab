@@ -12,14 +12,9 @@ type Props = {
   onPointerDown: (e: React.PointerEvent) => void;
   onPinClick: (pinId: string) => void;
   wiringActive: boolean;
-  isLedOn?: boolean;
-  hasCurrent?: boolean;
 };
 
-// Wrapper fotorrealista — reemplaza WokwiReal + FallbackSVG planos por SVGs con
-// gradientes complejos, sombras, textura PCB, metales especulares y relieve 3D.
-// Mantiene 1:1 con WOKWI_NORMS para que el overlay de pines siga alineado visualmente.
-function PhotorealReal({ comp, isLedOn, hasCurrent }: { comp: PlacedComponent; isLedOn?: boolean; hasCurrent?: boolean }) {
+function PhotorealReal({ comp }: { comp: PlacedComponent }) {
   const def = getDefinition(comp.definitionId);
   if (!def) return null;
   return (
@@ -28,17 +23,13 @@ function PhotorealReal({ comp, isLedOn, hasCurrent }: { comp: PlacedComponent; i
       width={def.width}
       height={def.height}
       props={comp.props as Record<string, string | number>}
-      isLedOn={isLedOn}
-      hasCurrent={hasCurrent}
     />
   );
 }
 
-export function ComponentView({ comp, selected, onSelect, onPointerDown, onPinClick, wiringActive, isLedOn, hasCurrent }: Props) {
+export function ComponentView({ comp, selected, onSelect, onPointerDown, onPinClick, wiringActive }: Props) {
   const def = getDefinition(comp.definitionId);
   if (!def) return null;
-  const ledOn = !!isLedOn;
-  const withCurrent = !!hasCurrent || ledOn;
 
   return (
     <div
@@ -58,35 +49,21 @@ export function ComponentView({ comp, selected, onSelect, onPointerDown, onPinCl
         height: def.height,
         transform: `rotate(${comp.rotation}deg)`,
         transformOrigin: "center",
-        filter:
-          def.id === "led" && ledOn
-            ? "drop-shadow(0 4px 10px rgba(0,0,0,0.42)) drop-shadow(0 0 16px rgba(251,146,60,0.55))"
-            : "drop-shadow(0 4px 8px rgba(0,0,0,0.32)) drop-shadow(0 1px 2px rgba(0,0,0,0.24))",
+        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.32)) drop-shadow(0 1px 2px rgba(0,0,0,0.24))",
         borderRadius: 6,
-        ...(def.id === "resistor" && withCurrent ? { boxShadow: "0 0 0 2px rgba(251,146,60,0.22), 0 0 18px rgba(251,146,60,0.32)" } : {}),
       }}
     >
       <div
         className={`relative flex items-center justify-center rounded-[5px] overflow-visible ${selected ? "ring-2 ring-[#00979d] ring-offset-2" : "ring-1 ring-transparent hover:ring-[#444]"}`}
         style={{ width: def.width, height: def.height, ...(selected ? { ["--tw-ring-offset-color" as string]: "#3a3a3a" } : {}) }}
       >
-        {ledOn && def.id === "led" && (
-          <span
-            className="absolute inset-[8%] rounded-full pointer-events-none -z-10"
-            style={{ background: "radial-gradient(ellipse at center, rgba(251,191,36,0.92) 0%, rgba(239,68,68,0.58) 42%, transparent 75%)", filter: "blur(10px)", opacity: 0.95 }}
-          />
-        )}
-        {withCurrent && def.id === "resistor" && !selected && (
-          <span className="absolute inset-0 rounded-[5px] pointer-events-none" style={{ boxShadow: "inset 0 0 10px rgba(251,146,60,0.28)" }} />
-        )}
-        <PhotorealReal comp={comp} isLedOn={ledOn} hasCurrent={withCurrent} />
+        <PhotorealReal comp={comp} />
         {selected && <span className="absolute -top-1 -right-1 size-2 rounded-full border-2" style={{ background: "#00979d", borderColor: "#3a3a3a" }} />}
       </div>
 
       {def.pins.map((p) => {
         const norm = getWokwiNorm(def.id, p.id);
         if (norm) {
-          // clamp norm ligeramente para que el overlay no quede fuera del viewport cuando la norma >1 (botón)
           const nx = Math.min(1, Math.max(0, norm.nx));
           const ny = Math.min(1, Math.max(0, norm.ny));
           return (

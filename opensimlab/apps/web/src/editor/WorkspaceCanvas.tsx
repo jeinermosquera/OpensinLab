@@ -4,7 +4,6 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { ComponentView } from "@/components/ComponentView";
 import { WiresLayer, getPinPosition } from "@/components/WiresLayer";
 import type { PlacedComponent, Wire, WireEndpoint } from "@/core/state/circuit";
-import type { SimulationResult } from "@/simulation/SimulationEngine";
 import { Copy, RotateCw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { GraphCanvas, type GraphCanvasHandle } from "./graph/GraphCanvas";
 import { getDefinition } from "@/components/definitions";
@@ -12,7 +11,6 @@ import { getX6Ports } from "./graph/ports";
 import { DEFAULT_EDGE_CONFIG } from "./graph/edges";
 
 // Flag Fase 2: cuando true, renderiza X6 en vez del div board legacy.
-// Mantiene fallback para rollback inmediato sin borrar lógica previa.
 const USE_X6 = true;
 
 type Props = {
@@ -34,7 +32,6 @@ type Props = {
   onCancelWire: () => void;
   onWireConnect?: (payload: { from: WireEndpoint; to: WireEndpoint; color: string }) => void;
   onWireRemove?: (id: string) => void;
-  simulation?: SimulationResult;
 };
 
 export function WorkspaceCanvas({
@@ -56,12 +53,10 @@ export function WorkspaceCanvas({
   onCancelWire,
   onWireConnect,
   onWireRemove,
-  simulation,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
-  // X6 refs — solo usados cuando USE_X6=true
   const graphHandleRef = useRef<GraphCanvasHandle>(null);
   const [x6Zoom, setX6Zoom] = useState(100);
 
@@ -80,7 +75,6 @@ export function WorkspaceCanvas({
   const pendingPos = pending ? getPinPosition(components, pending.from.instanceId, pending.from.pinId) : null;
   const hasSelection = !!selectedId && !wires.find((w) => w.id === selectedId);
 
-  // Callbacks X6 — delegan a graph.zoom() y mantienen toolbar existente
   const handleX6Ready = useCallback(() => {
     const g = graphHandleRef.current?.getGraph();
     if (g) {
@@ -89,11 +83,8 @@ export function WorkspaceCanvas({
     }
   }, []);
 
-  // Fase 3: handlers bidireccionales Graph <-> State
   const handleX6Drop = useCallback(
     (definitionId: string, x: number, y: number, nodeId?: string) => {
-      // x,y ya vienen en coords graph (centradas snap en GraphCanvas), pero onAdd vuelve a centrar/snap
-      // Pasamos nodeId para mantener id consistente entre X6 y CircuitState
       onAdd(definitionId, x, y, nodeId);
     },
     [onAdd],
@@ -102,7 +93,7 @@ export function WorkspaceCanvas({
   const handleX6Move = useCallback(
     (id: string, x: number, y: number) => {
       const c = components.find((cc) => cc.instanceId === id);
-      if (!c || c.x === x && c.y === y) return;
+      if (!c || (c.x === x && c.y === y)) return;
       onMove(id, x, y);
     },
     [components, onMove],
@@ -121,13 +112,12 @@ export function WorkspaceCanvas({
   );
   const handleWireRemove = useCallback(
     (id: string) => {
-      // solo si es wire existente; ignora edges temporales huérfanos para evitar loops
       if (wires.find((w) => w.id === id)) onWireRemove?.(id);
     },
     [wires, onWireRemove],
   );
 
-  // Sync state -> graph (undo/redo/clear/duplicate o carga inicial) — FASE 6 incluye simulación ledOn/hasCurrent
+  // Sync state -> graph (undo/redo/clear/duplicate o carga inicial) — solo visual, sin simulación
   useEffect(() => {
     if (!USE_X6) return;
     const graph = graphHandleRef.current?.getGraph();
@@ -137,9 +127,6 @@ export function WorkspaceCanvas({
       for (const c of components) {
         const def = getDefinition(c.definitionId);
         if (!def) continue;
-        const ledOn = simulation ? !!simulation.ledStates[c.instanceId] : false;
-        const hasCurrent = simulation ? !!simulation.resistorStates[c.instanceId] || ledOn : false;
-        const simData = { ledOn: def.id === "led" ? ledOn : undefined, hasCurrent: def.id === "resistor" || def.id === "led" ? hasCurrent : undefined };
         if (!existingIds.has(c.instanceId)) {
           try {
             graph.addNode({
@@ -149,7 +136,7 @@ export function WorkspaceCanvas({
               y: c.y,
               width: def.width,
               height: def.height,
-              data: { definitionId: c.definitionId, props: c.props, ...simData },
+              data: { definitionId: c.definitionId, props: c.props },
               ports: getX6Ports(def) as unknown as Record<string, unknown>,
               zIndex: 1,
             });
@@ -162,7 +149,7 @@ export function WorkspaceCanvas({
             setPosition: (x: number, y: number) => void;
             getSize: () => { width: number; height: number };
             setSize: (w: number, h: number) => void;
-            getData: () => { definitionId?: string; props?: Record<string, unknown>; ledOn?: boolean; hasCurrent?: boolean };
+            getData: () => { definitionId?: string; props?: Record<string, unknown> };
             setData: (d: unknown) => void;
           } | null;
           if (!node) continue;
@@ -180,13 +167,11 @@ export function WorkspaceCanvas({
           }
           const data = node.getData();
           const propsChanged = JSON.stringify(data?.props) !== JSON.stringify(c.props) || data?.definitionId !== c.definitionId;
-          const simChanged = (data?.ledOn ?? false) !== (simData.ledOn ?? false) || (data?.hasCurrent ?? false) !== (simData.hasCurrent ?? false);
-          if (propsChanged || simChanged) {
+          if (propsChanged) {
             try {
-              node.setData({ definitionId: c.definitionId, props: c.props, ...simData });
+              node.setData({ definitionId: c.definitionId, props: c.props });
             } catch {}
           }
-          // Rotación Fase 3: sincroniza angle si cambió via PropertiesPanel
           try {
             const getAngle = (node as unknown as { getAngle?: () => number }).getAngle?.() ?? 0;
             if (getAngle !== c.rotation) {
@@ -195,18 +180,15 @@ export function WorkspaceCanvas({
               if (typeof maybeSet === "function") maybeSet(c.rotation);
               else if (typeof setAngle === "function") (node as unknown as { rotate: (d: number) => void }).rotate(c.rotation - getAngle);
               else {
-                // fallback: set via data angle + re-render
                 (node as unknown as { prop: (k: string, v: unknown) => void }).prop?.("angle", c.rotation);
               }
             }
           } catch {}
         }
       }
-      // Eliminar nodos huérfanos (no disparar onRemove si ya no existen en state)
       for (const node of graph.getNodes()) {
         if (!components.find((c) => c.instanceId === node.id)) {
           try {
-            // silent para no retrigger handleX6Remove si ya está fuera de state
             const stillInState = components.some((c) => c.instanceId === node.id);
             if (!stillInState) node.remove();
           } catch {}
@@ -215,7 +197,7 @@ export function WorkspaceCanvas({
     } catch {
       // ignore during init
     }
-  }, [components, simulation]);
+  }, [components]);
 
   // FASE 4: sync wires → graph edges (manhattan + rounded, usa DEFAULT_EDGE_CONFIG)
   useEffect(() => {
@@ -225,10 +207,8 @@ export function WorkspaceCanvas({
     try {
       const edgeIds = new Set(graph.getEdges().map((e) => e.id));
       const wireIds = new Set(wires.map((w) => w.id));
-      // Crear wires faltantes en graph
       for (const w of wires) {
         if (!edgeIds.has(w.id)) {
-          // si hay edge temporal huérfano con misma conexión pero distinto id, eliminarlo
           try {
             const dupTemp = graph.getEdges().find((e) => {
               const s = (e as unknown as { getSource: () => { cell?: string; port?: string } }).getSource?.();
@@ -256,7 +236,6 @@ export function WorkspaceCanvas({
             } as unknown as Record<string, unknown>);
           } catch {}
         } else {
-          // actualizar color si cambió y resaltar si seleccionado
           try {
             const edge = graph.getCellById(w.id) as unknown as { attr: (path: string, v?: unknown) => unknown; setData?: (d: unknown) => void } | null;
             if (edge) {
@@ -264,7 +243,6 @@ export function WorkspaceCanvas({
               if (cur !== w.color) {
                 try { (edge as unknown as { attr: (p: string, v: string) => void }).attr("line/stroke", w.color); } catch {}
               }
-              // highlight si seleccionado
               const isSelected = selectedId === w.id;
               try {
                 (edge as unknown as { attr: (p: string, v: unknown) => void }).attr("line/strokeWidth", isSelected ? 4 : 2.8);
@@ -273,12 +251,10 @@ export function WorkspaceCanvas({
           } catch {}
         }
       }
-      // Eliminar edges huérfanos (no en wires)
       for (const e of graph.getEdges()) {
         if (!wireIds.has(e.id as string)) {
           const s = (e as unknown as { getSource: () => { cell?: string } }).getSource?.();
           const t = (e as unknown as { getTarget: () => { cell?: string } }).getTarget?.();
-          // solo eliminar si no es edge temporal pendiente (source/target incompleto)
           if (s?.cell && t?.cell) {
             try { e.remove(); } catch {}
           }
@@ -316,40 +292,6 @@ export function WorkspaceCanvas({
     }
   }, [onZoomReset]);
 
-  // FASE 6 — resaltar wires con corriente si LED ON (voltaje) — actualiza stroke en edges del camino
-  useEffect(() => {
-    if (!USE_X6 || !simulation) return;
-    const graph = graphHandleRef.current?.getGraph();
-    if (!graph) return;
-    try {
-      const hasCurrent = simulation.pathFound && simulation.gpioState["esp32-gpio2"] === "HIGH";
-      // mapea componentIds en path para saber qué edges destacar
-      const pathSet = new Set(simulation.pathComponentIds);
-      for (const edge of graph.getEdges()) {
-        const src = (edge as unknown as { getSource: () => { cell?: string } }).getSource?.();
-        const tgt = (edge as unknown as { getTarget: () => { cell?: string } }).getTarget?.();
-        const involvesPath = !!(src?.cell && tgt?.cell && (pathSet.has(src.cell) || pathSet.has(tgt.cell) || (src.cell && tgt.cell && pathSet.has(src.cell) && pathSet.has(tgt.cell))));
-        // fallback: si path incluye ambos extremos del wire → está en el camino central
-        const eid = (edge as unknown as { id: string }).id;
-        const wire = wires.find((w) => w.id === eid);
-        const inPath = wire ? pathSet.has(wire.from.instanceId) && pathSet.has(wire.to.instanceId) ? true : (pathSet.has(wire.from.instanceId) || pathSet.has(wire.to.instanceId)) && hasCurrent : false;
-        try {
-          if (hasCurrent && (involvesPath || inPath)) {
-            // realza con glow amarillento cuando hay corriente
-            (edge as unknown as { attr: (p: string, v: unknown) => void }).attr("line/strokeWidth", 3.6);
-            (edge as unknown as { attr: (p: string, v: unknown) => void }).attr("line/shadow", "0 0 6px rgba(251,146,60,0.5)");
-          } else {
-            (edge as unknown as { attr: (p: string, v: unknown) => void }).attr("line/strokeWidth", selectedId === eid ? 4 : 2.8);
-          }
-        } catch {}
-      }
-    } catch {}
-  }, [simulation, wires, selectedId]);
-
-  // x6Zoom se sincroniza via evento 'scale' dentro de GraphCanvas y via
-  // listener instalado en onGraphReady más abajo. No se requiere polling aquí.
-
-  // Toolbar actions: X6 path delega a graph.zoom(), fallback usa props
   const zoomOutAction = USE_X6 ? handleX6ZoomOut : onZoomOut;
   const zoomInAction = USE_X6 ? handleX6ZoomIn : onZoomIn;
   const zoomResetAction = USE_X6 ? handleX6ZoomReset : onZoomReset;
@@ -358,7 +300,6 @@ export function WorkspaceCanvas({
   if (USE_X6) {
     return (
       <section className="flex-1 min-w-0 flex flex-col overflow-hidden relative" style={{ background: "var(--canvas-bg)" }} aria-label="Área de trabajo">
-        {/* Top floating bar — dark Wokwi — idéntica a legacy */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-2" style={{ zIndex: 5 }}>
           <div className="flex items-center gap-1 p-1 rounded-md border" style={{ background: "#252525", borderColor: "#333", boxShadow: "none" }}>
             <span className="px-2.5 py-1 text-xs font-mono rounded-sm border inline-flex items-center gap-1.5" style={{ background: "#1e1e1e", borderColor: "#333", color: "#aaa" }}>
@@ -401,7 +342,6 @@ export function WorkspaceCanvas({
           </div>
         </div>
 
-        {/* X6 Canvas — ocupa todo el espacio disponible; Grid + panning + zoom via graph */}
         <div className="flex-1 min-h-0 flex flex-col pt-[44px]">
           <GraphCanvas
             ref={graphHandleRef}
@@ -421,7 +361,7 @@ export function WorkspaceCanvas({
             className="flex-1 min-h-0 relative overflow-hidden"
           />
           <p className="text-center text-[11px] py-2 font-mono shrink-0" style={{ color: "#777", background: "var(--canvas-bg)" }}>
-            X6 activo (Fase 4) · ESP32 GPIO → resistencia → LED → GND · manhattan/rounded · Ctrl+rueda zoom · Alt+arrastrar pan
+            X6 · manhattan/rounded · Ctrl+rueda zoom · Alt+arrastrar pan
           </p>
         </div>
       </section>
@@ -430,7 +370,6 @@ export function WorkspaceCanvas({
 
   return (
     <section className="flex-1 min-w-0 flex flex-col overflow-hidden relative" style={{ background: "var(--canvas-bg)" }} aria-label="Área de trabajo">
-      {/* Top floating bar — dark Wokwi */}
       <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-2" style={{ zIndex: 5 }}>
         <div className="flex items-center gap-1 p-1 rounded-md border" style={{ background: "#252525", borderColor: "#333", boxShadow: "none" }}>
           <span className="px-2.5 py-1 text-xs font-mono rounded-sm border inline-flex items-center gap-1.5" style={{ background: "#1e1e1e", borderColor: "#333", color: "#aaa" }}>
@@ -492,7 +431,6 @@ export function WorkspaceCanvas({
         }}
         className="flex-1 overflow-auto p-6 sm:p-8 pt-14 sm:pt-14"
       >
-        {/* Board — solid dark #3a3a3a, no dot grid, no white veil */}
         <div
           data-board
           className="relative mx-auto rounded-sm overflow-hidden"
@@ -519,8 +457,6 @@ export function WorkspaceCanvas({
                 selected={c.instanceId === selectedId}
                 onSelect={() => onSelect(c.instanceId)}
                 wiringActive={!!pending}
-                isLedOn={simulation ? !!simulation.ledStates[c.instanceId] : undefined}
-                hasCurrent={simulation ? !!simulation.resistorStates[c.instanceId] || !!simulation.ledStates[c.instanceId] : undefined}
                 onPinClick={(pinId) => onPinClick(c.instanceId, pinId)}
                 onPointerDown={(e) => {
                   if (pending) return;
