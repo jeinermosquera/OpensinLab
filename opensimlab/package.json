@@ -4,16 +4,12 @@
   "private": true,
   "description": "Electronic simulation platform",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "npm run dev --workspace=apps/web",
-    "dev:api": "npm run dev --workspace=apps/api",
-    "build": "npm run build --workspaces",
     "build:web": "npm run build --workspace=apps/web",
-    "lint": "npm run lint --workspaces",
+    "lint": "npm run lint --workspace=apps/web",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
